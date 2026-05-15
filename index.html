@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>AXODE - Code Editor & IDE Playground</title>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Google Fonts: Fira Code untuk coding -->
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #1e1e1e;
+            font-family: 'Fira Code', 'Segoe UI', monospace;
+            height: 100vh;
+            overflow: hidden;
+            color: #d4d4d4;
+        }
+
+        /* App Container */
+        .app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: #2d2d2d;
+        }
+
+        /* Toolbar / Navbar */
+        .navbar {
+            background: #252526;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #3e3e42;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo {
+            font-size: 1.7rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #c0c0c0, #8a8a8a);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: 1px;
+        }
+        .logo span {
+            color: #b0b0b0;
+            background: none;
+            -webkit-background-clip: unset;
+        }
+        .badge {
+            background: #3c3c3c;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 30px;
+            color: #cecece;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+        }
+        .btn {
+            background: #3c3c3c;
+            border: none;
+            color: #e0e0e0;
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.8rem;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary {
+            background: #0e639c;
+        }
+        .btn-primary:hover {
+            background: #1177bb;
+        }
+        .btn:hover {
+            background: #505050;
+        }
+        .btn-run {
+            background: #2d6a4f;
+        }
+        .btn-run:hover {
+            background: #40916c;
+        }
+
+        /* Main workspace */
+        .workspace {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Sidebar File Explorer (mirip folder) */
+        .explorer {
+            width: 260px;
+            background: #252526;
+            border-right: 1px solid #3e3e42;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .explorer-header {
+            padding: 12px 16px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #3e3e42;
+            background: #2d2d2d;
+        }
+
+        .folder-tree {
+            padding: 8px 0;
+            flex:1;
+        }
+
+        .tree-item {
+            padding: 5px 12px 5px 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            transition: background 0.1s;
+            border-left: 2px solid transparent;
+        }
+        .tree-item:hover {
+            background: #2a2d2e;
+        }
+        .tree-item.active {
+            background: #094771;
+            border-left: 2px solid #3794ff;
+        }
+        .folder {
+            font-weight: 500;
+            color: #c8c8c8;
+        }
+        .file-icon {
+            width: 20px;
+            text-align: center;
+        }
+        .file-name {
+            word-break: break-word;
+        }
+
+        .context-actions {
+            margin-top: 12px;
+            padding: 10px 12px;
+            border-top: 1px solid #3e3e42;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .small-btn {
+            background: #333333;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 4px;
+            color: #ccc;
+            font-size: 0.7rem;
+            cursor: pointer;
+        }
+
+        /* Editor + Preview */
+        .editor-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #1e1e1e;
+        }
+        .code-toolbar {
+            background: #2d2d2d;
+            padding: 5px 12px;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #3e3e42;
+        }
+        .lang-badge {
+            font-size: 0.75rem;
+            background: #3c3c3c;
+            padding: 2px 10px;
+            border-radius: 20px;
+        }
+        textarea {
+            flex: 1;
+            background: #1e1e1e;
+            border: none;
+            color: #d4d4d4;
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
+            padding: 16px;
+            resize: none;
+            outline: none;
+            line-height: 1.5;
+            tab-size: 4;
+        }
+        .preview-area {
+            height: 45%;
+            background: white;
+            border-top: 1px solid #3e3e42;
+            display: flex;
+            flex-direction: column;
+        }
+        .preview-header {
+            background: #2d2d2d;
+            padding: 4px 12px;
+            font-size: 0.7rem;
+            display: flex;
+            justify-content: space-between;
+        }
+        iframe {
+            flex: 1;
+            border: none;
+            width: 100%;
+            background: white;
+        }
+        .splitter {
+            height: 4px;
+            background: #3e3e42;
+            cursor: ns-resize;
+        }
+        @media (max-width: 700px) {
+            .explorer {
+                width: 210px;
+            }
+            .btn span:not(.fa) {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <div class="navbar">
+        <div class="logo-area">
+            <div class="logo">AXODE <span>⚡</span></div>
+            <div class="badge">multi-language IDE</div>
+        </div>
+        <div class="action-buttons">
+            <button id="runCodeBtn" class="btn btn-run"><i class="fas fa-play"></i> <span>Run / Play</span></button>
+            <button id="newFileBtn" class="btn"><i class="fas fa-file"></i> <span>New File</span></button>
+            <button id="newFolderBtn" class="btn"><i class="fas fa-folder"></i> <span>New Folder</span></button>
+        </div>
+    </div>
+
+    <div class="workspace">
+        <!-- File Explorer Sidebar -->
+        <div class="explorer">
+            <div class="explorer-header"><i class="fas fa-folder-open"></i> EXPLORER</div>
+            <div id="fileTreeContainer" class="folder-tree">
+                <!-- Tree dinamis via JS -->
+            </div>
+            <div class="context-actions">
+                <button id="addRootFileBtn" class="small-btn"><i class="fas fa-plus"></i> File</button>
+                <button id="addRootFolderBtn" class="small-btn"><i class="fas fa-folder-plus"></i> Folder</button>
+                <button id="deleteCurrentBtn" class="small-btn" style="background:#5a2e2e"><i class="fas fa-trash"></i> Delete</button>
+            </div>
+        </div>
+
+        <!-- Editor + Preview -->
+        <div class="editor-panel">
+            <div class="code-toolbar">
+                <span><i class="fas fa-code"></i> Editor</span>
+                <span id="currentLangLabel" class="lang-badge">HTML</span>
+            </div>
+            <textarea id="codeEditor" placeholder="Tulis kode kamu disini..."></textarea>
+            <div class="splitter" id="splitter"></div>
+            <div class="preview-area" id="previewArea">
+                <div class="preview-header">
+                    <span><i class="fas fa-eye"></i> Preview / Output</span>
+                    <span id="outputType">🌐 HTML/JS preview</span>
+                </div>
+                <iframe id="livePreview" title="preview" sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ---------- DATA MODEL (Virtual File System dengan Folder) ----------
+    // Struktur: setiap item punya id, name, type ('file' atau 'folder'), parentId (null jika root), content (untuk file)
+    let nextId = 1;
+    let files = [
+        { id: nextId++, name: "index.html", type: "file", parentId: null, content: `<!DOCTYPE html>
+<html>
+<head><title>AXODE Demo</title><style>body{font-family:sans-serif;background:#f0f0f0;}</style></head>
+<body>
+<h1>Hello dari AXODE!</h1>
+<p>Selamat datang di editor kode.</p>
+<button onclick="alert('JS works!')">Klik Saya</button>
+</body>
+</html>` },
+        { id: nextId++, name: "style.css", type: "file", parentId: null, content: `body { background: #eef; color: #333; }` },
+        { id: nextId++, name: "script.js", type: "file", parentId: null, content: `console.log("JS Loaded");\ndocument.body.style.border = "2px solid gold";` },
+        { id: nextId++, name: "game", type: "folder", parentId: null, content: null },
+        { id: nextId++, name: "game.js", type: "file", parentId: 4, content: `// Game sederhana tebak angka\nfunction startGame() {\n  const target = Math.floor(Math.random() * 10) + 1;\n  let guess = prompt("Tebak angka 1-10");\n  if(parseInt(guess) === target) alert("Benar!");\n  else alert("Salah! angka adalah "+target);\n}\nstartGame();` },
+        { id: nextId++, name: "main.cpp", type: "file", parentId: null, content: `#include <iostream>\nusing namespace std;\nint main() {\n    cout << "Hello C++ dari AXODE (simulasi)";\n    return 0;\n}` },
+        { id: nextId++, name: "data.xml", type: "file", parentId: null, content: `<?xml version="1.0"?><note><to>AXODE</to><message>Coding menyenangkan!</message></note>` }
+    ];
+
+    // Helper functions
+    function getFilesByParent(parentId) {
+        return files.filter(f => f.parentId === parentId);
+    }
+
+    function getFileById(id) {
+        return files.find(f => f.id === id);
+    }
+
+    let currentFileId = 1;   // index.html aktif
+    let currentFileObj = getFileById(currentFileId);
+
+    // Render tree explorer
+    function renderTree() {
+        const container = document.getElementById('fileTreeContainer');
+        container.innerHTML = '';
+        const rootItems = getFilesByParent(null);
+        rootItems.sort((a,b) => (a.type === 'folder' ? -1 : 1) || a.name.localeCompare(b.name));
+        rootItems.forEach(item => {
+            const element = createTreeElement(item, 0);
+            container.appendChild(element);
+        });
+    }
+
+    function createTreeElement(item, depth) {
+        const div = document.createElement('div');
+        div.style.paddingLeft = `${depth * 16 + 8}px`;
+        div.className = `tree-item ${item.type === 'folder' ? 'folder-item' : 'file-item'}`;
+        if (currentFileId === item.id && item.type === 'file') div.classList.add('active');
+        
+        const iconSpan = document.createElement('span');
+        iconSpan.className = 'file-icon';
+        if (item.type === 'folder') {
+            iconSpan.innerHTML = '<i class="fas fa-folder"></i>';
+        } else {
+            const ext = item.name.split('.').pop();
+            if (ext === 'html') iconSpan.innerHTML = '<i class="fab fa-html5"></i>';
+            else if (ext === 'css') iconSpan.innerHTML = '<i class="fab fa-css3-alt"></i>';
+            else if (ext === 'js') iconSpan.innerHTML = '<i class="fab fa-js"></i>';
+            else if (ext === 'cpp') iconSpan.innerHTML = '<i class="fas fa-code"></i>';
+            else if (ext === 'xml') iconSpan.innerHTML = '<i class="fas fa-code"></i>';
+            else iconSpan.innerHTML = '<i class="fas fa-file-alt"></i>';
+        }
+        
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'file-name';
+        nameSpan.innerText = item.name;
+        
+        div.appendChild(iconSpan);
+        div.appendChild(nameSpan);
+        
+        // Klik untuk file
+        div.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (item.type === 'file') {
+                openFile(item.id);
+            } else if (item.type === 'folder') {
+                // toggle children display? bisa di expand tapi kita render semua terlihat (expanded semua)
+                // bisa custom, tapi pake tree full tanpa collapse biar simple UX mirip Acode
+                // implementasi expand/collapse tidak default, tapi folder children selalu terlihat dari parent mapping
+                // untuk mempermudah, kita paksa rerender? tidak perlu, kita sudah menampilkan semua item dengan indent.
+            }
+        });
+        
+        // jika folder, render children
+        if (item.type === 'folder') {
+            const children = getFilesByParent(item.id);
+            children.sort((a,b) => a.name.localeCompare(b.name));
+            children.forEach(child => {
+                const childEl = createTreeElement(child, depth + 1);
+                div.appendChild(childEl);
+            });
+        }
+        return div;
+    }
+    
+    function openFile(id) {
+        const file = getFileById(id);
+        if (file && file.type === 'file') {
+            currentFileId = id;
+            currentFileObj = file;
+            document.getElementById('codeEditor').value = file.content || '';
+            // update language badge based on extension
+            const ext = file.name.split('.').pop().toLowerCase();
+            let lang = ext.toUpperCase();
+            if (ext === 'js') lang = 'JavaScript';
+            else if (ext === 'cpp') lang = 'C++';
+            else if (ext === 'html') lang = 'HTML';
+            else if (ext === 'css') lang = 'CSS';
+            else if (ext === 'xml') lang = 'XML';
+            else lang = ext || 'TEXT';
+            document.getElementById('currentLangLabel').innerText = lang;
+            // re-run preview jika HTML/JS/CSS terkait? tapi biar manual run by user
+            highlightActiveFile();
+        }
+    }
+    
+    function highlightActiveFile() {
+        renderTree(); // refresh sederhana
+    }
+    
+    // Simpan konten editor ke file aktif
+    function saveCurrentContent() {
+        if (currentFileObj) {
+            const newContent = document.getElementById('codeEditor').value;
+            currentFileObj.content = newContent;
+            // update di array files
+            const idx = files.findIndex(f => f.id === currentFileObj.id);
+            if (idx !== -1) files[idx].content = newContent;
+        }
+    }
+    
+    // menjalankan preview berdasarkan file aktif atau jika html/js khusus?
+    function runPreview() {
+        saveCurrentContent();
+        const file = currentFileObj;
+        if (!file) return;
+        const ext = file.name.split('.').pop().toLowerCase();
+        const iframe = document.getElementById('livePreview');
+        const outputLabel = document.getElementById('outputType');
+        
+        if (ext === 'html') {
+            // Tampilkan full HTML
+            let htmlContent = file.content || '';
+            iframe.srcdoc = htmlContent;
+            outputLabel.innerHTML = '🌐 HTML Preview (Live)';
+        } 
+        else if (ext === 'js') {
+            // Untuk file JS, buat mini html runner yang mengeksekusi script
+            const jsCode = file.content;
+            const wrapperHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>JS Runner</title></head><body><h3>Output JavaScript:</h3><div id="output"></div><pre id="logArea" style="background:#f4f4f4;padding:8px;"></pre><script>\n// console hijack\nlet consoleOutput = [];\nconst originalLog = console.log;\nconsole.log = function(...args) {\n    consoleOutput.push(args.map(a=>JSON.stringify(a)).join(' '));\n    originalLog.apply(console, args);\n    let logDiv = document.getElementById('logArea');\n    if(logDiv) logDiv.innerText = consoleOutput.join('\\n');\n};\nwindow.onerror = function(e){console.log("Error:"+e)};\ntry {\n    ${jsCode}\n} catch(e) { console.log("Execution error: "+e.message); }\n<\/script></body></html>`;
+            iframe.srcdoc = wrapperHtml;
+            outputLabel.innerHTML = '⚡ JS Execution Playground';
+        }
+        else if (ext === 'css') {
+            const cssDemo = `<!DOCTYPE html><html><head><style>${file.content}</style></head><body><div style="padding:20px"><h1>CSS Preview</h1><p>Ini adalah demo CSS langsung dari file ${file.name}</p><button>Test Button</button></div></body></html>`;
+            iframe.srcdoc = cssDemo;
+            outputLabel.innerHTML = '🎨 CSS Live Preview';
+        }
+        else if (ext === 'cpp') {
+            iframe.srcdoc = `<!DOCTYPE html><html><body style="background:#1e1e1e; color:white;font-family:monospace"><h3>C++ Code (simulasi)</h3><pre>${escapeHtml(file.content)}</pre><p><i>Untuk menjalankan C++ asli diperlukan compiler, namun AXODE menampilkan kode + simulasi output logic via WebAssembly dapat diintegrasi nanti. Disini hanya preview kode.</i></p></body></html>`;
+            outputLabel.innerHTML = '📘 C++ Source Viewer';
+        }
+        else if (ext === 'xml') {
+            iframe.srcdoc = `<!DOCTYPE html><html><body><pre style="background:#222;color:#0f0;">${escapeHtml(file.content)}</pre><p>XML Data ditampilkan.</p></body></html>`;
+            outputLabel.innerHTML = '📄 XML Preview';
+        }
+        else {
+            iframe.srcdoc = `<!DOCTYPE html><html><body><pre>${escapeHtml(file.content)}</pre><p>Tipe file tidak bisa di-render langsung, menampilkan teks.</p></body></html>`;
+            outputLabel.innerHTML = '📄 Text Preview';
+        }
+    }
+    
+    function escapeHtml(str) {
+        if(!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if(m === '&') return '&amp;';
+            if(m === '<') return '&lt;';
+            if(m === '>') return '&gt;';
+            return m;
+        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+            return c;
+        });
+    }
+    
+    // Create New File (di root atau folder aktif? sederhana: popup pilih parent dari current? agar mirip UX: file baru di root, bisa juga di folder terpilih? advanced: kita buat prompt dengan pilih folder)
+    // Untuk simplicity: new file selalu di root, dan user bisa pindah folder via create folder dll.
+    function createNewFile(parentId = null) {
+        let fileName = prompt("Nama file (contoh: baru.js, script.html):", "newfile.js");
+        if (!fileName) return;
+        if (!fileName.includes('.')) fileName += '.txt';
+        const newId = nextId++;
+        const newFile = {
+            id: newId,
+            name: fileName,
+            type: 'file',
+            parentId: parentId,
+            content: `// File ${fileName} dibuat di AXODE\nconsole.log("Hello dari ${fileName}");`
+        };
+        files.push(newFile);
+        if (parentId === null) {
+            // root
+        }
+        renderTree();
+        openFile(newId);
+    }
+    
+    function createNewFolder(parentId = null) {
+        let folderName = prompt("Nama folder:", "folder_baru");
+        if (!folderName) return;
+        const newId = nextId++;
+        files.push({
+            id: newId,
+            name: folderName,
+            type: 'folder',
+            parentId: pa
